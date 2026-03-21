@@ -27,11 +27,8 @@ A lightweight, local-first AC service management dashboard for board repairs and
 4. Open in browser
    - `http://localhost/ac_service/`
 
-## Default Logins
-- Owner: `admin` / `password`
-- Staff: `staff1` / `password`
-
-Important: Change these passwords after first login.
+## Access
+For security, default credentials are not stored in the repository. Create your own users in the database after setup.
 
 ## WhatsApp Notes
 WhatsApp buttons use the app deep link (no API). Clicking opens WhatsApp Desktop/App with a pre-filled message; the staff member sends it manually.

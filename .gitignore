@@ -22,3 +22,7 @@ config.local.php
 /uploads/
 /storage/
 /tmp/
+
+# Local setup files
+/SETUP_README.txt
+/database_setup.sql
