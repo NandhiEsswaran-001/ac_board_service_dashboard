@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependency dirs
+/vendor/
+/node_modules/
+
+# Env / local config
+.env
+.env.*
+config.local.php
+
+# Logs / cache
+*.log
+*.cache
+.phpunit.result.cache
+
+# App data (local only)
+/uploads/
+/storage/
+/tmp/
