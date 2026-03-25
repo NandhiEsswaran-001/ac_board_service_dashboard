@@ -15,6 +15,15 @@ $employees = $db->query("SELECT id, full_name FROM users WHERE role IN ('staff',
 
 $success = '';
 $error   = '';
+$service_call_items_text = '';
+if (!empty($s['service_call_items'])) {
+    $decoded = json_decode($s['service_call_items'], true);
+    if (is_array($decoded)) {
+        $service_call_items_text = implode("\n", $decoded);
+    } else {
+        $service_call_items_text = $s['service_call_items'];
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -22,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customer_name     = trim($_POST['customer_name'] ?? '');
     $phone             = trim($_POST['phone'] ?? '');
     $address           = trim($_POST['address'] ?? '');
+    $map_link          = trim($_POST['map_link'] ?? '');
     $service_date      = $_POST['service_date'] ?? '';
     $assigned_employee = intval($_POST['assigned_employee'] ?? 0);
     $ac_type           = trim($_POST['ac_type'] ?? '');
@@ -37,10 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $voltage           = trim($_POST['voltage'] ?? '');
     $grill_temp        = trim($_POST['grill_temp'] ?? '');
     $sd_pressure       = trim($_POST['sd_pressure'] ?? '');
-    $service_call_items = $_POST['service_call_items'] ?? [];
-    if (!is_array($service_call_items)) $service_call_items = [];
-    $service_call_items = array_values(array_unique(array_map('trim', $service_call_items)));
-    $service_call_items_json = json_encode($service_call_items);
+    $service_call_items_text = trim($_POST['service_call_items'] ?? '');
     $service_amount    = floatval($_POST['service_amount'] ?? 0);
     $notes             = $s['notes'] ?? '';
 
@@ -53,14 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Customer name, phone, address, date, and problem are required.';
     } else {
         $upd = $db->prepare("UPDATE field_services SET
-            customer_name=?, phone=?, address=?, service_date=?, assigned_employee=?,
+            customer_name=?, phone=?, address=?, map_link=?, service_date=?, assigned_employee=?,
             ac_type=?, product_company=?, purchase_date=?, unit_location=?, problem=?, work_done=?,
             parts_used=?, service_charge=?, service_call_items=?, ampere=?, voltage=?, grill_temp=?, sd_pressure=?, warranty_text=?, service_amount=?,
             payment_status=?, status=?, notes=? WHERE id=?");
-        $upd->execute([$customer_name, $phone, $address, $service_date,
+        $upd->execute([$customer_name, $phone, $address, $map_link, $service_date,
                        $assigned_employee ?: null, $ac_type, $product_company, $purchase_date ?: null,
                        $unit_location, $problem, $work_done, $parts_used, $service_charge,
-                       $service_call_items_json, $ampere, $voltage, $grill_temp, $sd_pressure, $warranty_text, $service_amount, $payment_status,
+                       $service_call_items_text, $ampere, $voltage, $grill_temp, $sd_pressure, $warranty_text, $service_amount, $payment_status,
                        $status, $notes, $id]);
         header('Location: field_edit.php?id=' . $id . '&updated=1');
         exit;
@@ -188,35 +195,8 @@ include '../includes/header.php';
                 </div>
                 <div class="form-group full-width">
                     <label>Service Call Checklist</label>
-                    <div class="boxed-panel">
-                        <div class="boxed-title">Service Call Options</div>
-                        <div class="checklist-grid">
-                        <?php
-                            $serviceCallOptions = [
-                                'Evap. Coil Clean / Wash',
-                                'Cond. Coil Clean / Wash',
-                                'Air Filter Wash',
-                                'Blower & Fan Touching',
-                                'Noise / Vibration (if any)',
-                                'Grill Fitment',
-                                'Electrical Connection',
-                                'Unit Clean / Wash',
-                            ];
-                            $selectedItems = [];
-                            if (!empty($s['service_call_items'])) {
-                                $decoded = json_decode($s['service_call_items'], true);
-                                if (is_array($decoded)) $selectedItems = $decoded;
-                            }
-                        ?>
-                        <?php foreach ($serviceCallOptions as $opt): ?>
-                        <label class="check-item">
-                            <input type="checkbox" name="service_call_items[]" value="<?= htmlspecialchars($opt) ?>"
-                                <?= in_array($opt, $selectedItems, true) ? 'checked' : '' ?>>
-                            <span><?= htmlspecialchars($opt) ?></span>
-                        </label>
-                        <?php endforeach; ?>
-                        </div>
-                    </div>
+                    <textarea name="service_call_items" class="textarea-lg"
+                              placeholder="Enter checklist items, notes, or observations"><?= htmlspecialchars($_POST['service_call_items'] ?? $service_call_items_text) ?></textarea>
                 </div>
                 <div class="form-group full-width">
                     <label>Readings</label>
@@ -265,6 +245,11 @@ include '../includes/header.php';
                         <option value="<?= $st ?>" <?= $s['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Google Maps URL</label>
+                    <input type="url" name="map_link" value="<?= htmlspecialchars($s['map_link'] ?? '') ?>"
+                           placeholder="Paste Google Maps URL (optional)">
                 </div>
             </div>
 

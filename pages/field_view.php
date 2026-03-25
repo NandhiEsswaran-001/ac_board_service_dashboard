@@ -20,6 +20,7 @@ $wa_scheduled = "Hello Sir,\nYour AC service has been scheduled.\n\nProblem: {$s
 $wa_completed = "Hello Sir,\nYour AC service has been completed.\n\nWork Done: {$s['work_done']}\nParts Used: {$s['parts_used']}\nService Amount: ₹" . number_format($s['service_amount'],2) . "\n\nThank you for choosing us!";
 $wa_scheduled_url = whatsappLink((string)($s['phone'] ?? ''), $wa_scheduled);
 $wa_completed_url = whatsappLink((string)($s['phone'] ?? ''), $wa_completed);
+$map_link = trim($s['map_link'] ?? '');
 
 include '../includes/header.php';
 ?>
@@ -94,7 +95,7 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <?php if ($s['work_done'] || $s['parts_used'] || ($s['service_charge'] ?? '') || ($s['service_call'] ?? '') || ($s['warranty_text'] ?? '')): ?>
+<?php if ($s['work_done'] || $s['parts_used'] || ($s['service_charge'] ?? '') || ($s['service_call_items'] ?? '') || ($s['warranty_text'] ?? '')): ?>
         <hr class="divider">
         <div class="section-heading">Service Update</div>
         <div class="detail-grid">
@@ -117,10 +118,18 @@ include '../includes/header.php';
                         $items = [];
                         if (!empty($s['service_call_items'])) {
                             $decoded = json_decode($s['service_call_items'], true);
-                            if (is_array($decoded)) $items = $decoded;
+                            if (is_array($decoded)) {
+                                $items = $decoded;
+                            } else {
+                                $items = $s['service_call_items'];
+                            }
                         }
                     ?>
-                    <?= $items ? htmlspecialchars(implode(', ', $items)) : '-' ?>
+                    <?php if (is_array($items)): ?>
+                        <?= $items ? htmlspecialchars(implode(', ', $items)) : '-' ?>
+                    <?php else: ?>
+                        <?= $items ? nl2br(htmlspecialchars($items)) : '-' ?>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="detail-item">
@@ -152,6 +161,14 @@ include '../includes/header.php';
                 <div class="value"><?= statusBadge($s['payment_status']) ?></div>
             </div>
         </div>
+        <?php endif; ?>
+
+        <hr class="divider">
+        <div class="section-heading">Location</div>
+        <?php if ($map_link): ?>
+            <a href="<?= htmlspecialchars($map_link) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($map_link) ?></a>
+        <?php else: ?>
+            <p class="no-data">No map link provided.</p>
         <?php endif; ?>
 
     </div>

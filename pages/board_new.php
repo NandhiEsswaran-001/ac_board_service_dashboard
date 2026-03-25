@@ -33,8 +33,22 @@ $remark_items = [
     'Reactor'
 ];
 
+if (empty($_SESSION['board_new_token'])) {
+    $_SESSION['board_new_token'] = bin2hex(random_bytes(16));
+}
+$form_token = $_SESSION['board_new_token'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
+
+    $posted_token = $_POST['form_token'] ?? '';
+    if (!$posted_token || !hash_equals($_SESSION['board_new_token'] ?? '', $posted_token)) {
+        $error = 'Duplicate or invalid submission detected. Please try again.';
+    } else {
+        // Rotate token early to reduce chances of double-submit races.
+        $_SESSION['board_new_token'] = bin2hex(random_bytes(16));
+        $form_token = $_SESSION['board_new_token'];
+    }
 
     $customer_name  = trim($_POST['customer_name'] ?? '');
     $phone          = trim($_POST['phone'] ?? '');
@@ -51,7 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remark_checks = array_values(array_intersect($remark_checks, $remark_items));
     $remark_checks_str = implode(', ', $remark_checks);
 
-    if (!$customer_name || !$phone) {
+    if ($error) {
+        // Skip validation when submission is invalid.
+    } elseif (!$customer_name || !$phone) {
         $error = 'Customer name and phone are required.';
     } else {
         $db   = getDB();
@@ -63,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $problem, $customer_remarks, $remark_checks_str, $parts_inside,
                         $approx_amount, $_SESSION['user_id']]);
         $newId   = $db->lastInsertId();
+        unset($_SESSION['board_new_token']);
         header('Location: board_view.php?id=' . $newId . '&created=1');
         exit;
     }
@@ -80,6 +97,7 @@ include '../includes/header.php';
     <div class="card-body">
         <form method="POST">
             <?= csrfField() ?>
+            <input type="hidden" name="form_token" value="<?= htmlspecialchars($form_token) ?>">
 
             <div class="section-heading">Customer Information</div>
             <div class="form-grid">
@@ -102,10 +120,10 @@ include '../includes/header.php';
             </div>
 
             <hr class="divider">
-            <div class="section-heading">AC Board Details</div>
+            <div class="section-heading">Board Details</div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>AC Brand</label>
+                    <label>Brand</label>
                     <input type="text" name="ac_brand"
                            value="<?= htmlspecialchars($_POST['ac_brand'] ?? '') ?>"
                            placeholder="e.g. Daikin, LG, Voltas">
@@ -152,11 +170,25 @@ include '../includes/header.php';
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">💾 Save Board Entry</button>
+                <button type="submit" class="btn btn-primary" data-submit-btn>💾 Save Board Entry</button>
                 <a href="board_list.php" class="btn btn-light">Cancel</a>
             </div>
         </form>
     </div>
 </div>
-
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form');
+    if (!form) return;
+    form.addEventListener('submit', function() {
+        var btn = form.querySelector('[data-submit-btn]');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+        }
+    });
+});
+</script>
 <?php include '../includes/footer.php'; ?>
+
+

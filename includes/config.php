@@ -9,8 +9,10 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
-define('APP_NAME', 'AC Service Management');
+define('APP_NAME', 'Hot and Cold Engineering');
 define('APP_VERSION', '1.0');
+
+define('MAPS_API_KEY', '');
 
 define('SESSION_TIMEOUT',    1800);  // 30 min idle
 define('LOGIN_MAX_ATTEMPTS',    5);
@@ -165,6 +167,83 @@ function formatAmount($amount) {
 function formatDate($date) {
     if (!$date) return '-';
     return date('d M Y', strtotime($date));
+}
+
+function buildGoogleMapsEmbedUrl($url) {
+    $url = trim((string)$url);
+    if ($url === '') return '';
+    if (!filter_var($url, FILTER_VALIDATE_URL)) return '';
+    $parts = parse_url($url);
+    if (!$parts || empty($parts['scheme']) || empty($parts['host'])) return '';
+    $scheme = strtolower($parts['scheme']);
+    if ($scheme !== 'http' && $scheme !== 'https') return '';
+
+    $host = strtolower($parts['host']);
+    $allowedHosts = [
+        'google.com',
+        'www.google.com',
+        'maps.google.com',
+        'google.co.in',
+        'www.google.co.in',
+        'maps.app.goo.gl',
+        'goo.gl',
+    ];
+    $isAllowed = false;
+    foreach ($allowedHosts as $h) {
+        if ($host === $h || (strlen($host) > strlen($h) && substr($host, -strlen($h)) === $h)) {
+            $isAllowed = true;
+            break;
+        }
+    }
+    if (!$isAllowed) return '';
+
+    $path = $parts['path'] ?? '';
+    if (strpos($path, '/maps/embed') !== false) {
+        return $url;
+    }
+    $sep = (!empty($parts['query'])) ? '&' : '?';
+    return $url . $sep . 'output=embed';
+}
+
+function extractMapsIframeSrc($input) {
+    $input = trim((string)$input);
+    if ($input === '') return '';
+
+    $src = '';
+    if (stripos($input, '<iframe') !== false) {
+        if (preg_match('/src\\s*=\\s*[\'"]([^\'"]+)[\'"]/i', $input, $m)) {
+            $src = trim($m[1]);
+        }
+    } else {
+        $src = $input;
+    }
+
+    if ($src === '' || !filter_var($src, FILTER_VALIDATE_URL)) return '';
+    $parts = parse_url($src);
+    if (!$parts || empty($parts['scheme']) || empty($parts['host'])) return '';
+    $scheme = strtolower($parts['scheme']);
+    if ($scheme !== 'http' && $scheme !== 'https') return '';
+
+    $host = strtolower($parts['host']);
+    $allowedHosts = [
+        'google.com',
+        'www.google.com',
+        'maps.google.com',
+        'google.co.in',
+        'www.google.co.in',
+        'maps.app.goo.gl',
+        'goo.gl',
+    ];
+    $isAllowed = false;
+    foreach ($allowedHosts as $h) {
+        if ($host === $h || (strlen($host) > strlen($h) && substr($host, -strlen($h)) === $h)) {
+            $isAllowed = true;
+            break;
+        }
+    }
+    if (!$isAllowed) return '';
+
+    return $src;
 }
 
 function statusBadge($status) {

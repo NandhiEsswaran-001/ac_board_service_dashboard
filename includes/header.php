@@ -26,7 +26,7 @@ sendNoCacheHeaders();
     </button>
     <div class="mobile-logo">
         <span style="color:#3498db;font-size:20px;">❄</span>
-        <strong style="color:#ecf0f1;font-size:14px;margin-left:6px;">AC Service</strong>
+        <strong style="color:#ecf0f1;font-size:14px;margin-left:6px;">Hot and Cold Engineering</strong>
     </div>
     <div style="width:40px;"></div>
 </div>
@@ -39,7 +39,7 @@ sendNoCacheHeaders();
     <div class="sidebar-header">
         <div class="logo-icon">❄</div>
         <div class="logo-text">
-            <strong>AC Service</strong>
+            <strong>Hot and Cold Engineering</strong>
             <small>Management</small>
         </div>
     </div>

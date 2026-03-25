@@ -58,7 +58,7 @@ include '../includes/header.php';
                     <th>#</th>
                     <th>Customer Name</th>
                     <th>Phone</th>
-                    <th>AC Brand</th>
+                    <th>Brand</th>
                     <th>Problem</th>
                     <th>Approx. Amt</th>
                     <th>Final Amt</th>

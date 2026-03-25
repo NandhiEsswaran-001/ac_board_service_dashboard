@@ -64,6 +64,49 @@ document.addEventListener('DOMContentLoaded', function () {
         statusFilter.addEventListener('change', applyTableFilters);
     }
 
+    // ---- Table sorting on number column (#) ----
+    document.querySelectorAll('table').forEach(function (table) {
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+        if (!thead || !tbody) return;
+        const th = thead.querySelector('th:first-child');
+        if (!th) return;
+
+        th.classList.add('sortable-th');
+        th.setAttribute('role', 'button');
+        th.setAttribute('aria-sort', 'descending');
+        th.dataset.sortOrder = 'desc';
+
+        const indicator = document.createElement('span');
+        indicator.className = 'sort-indicator';
+        indicator.textContent = '▼';
+        th.appendChild(indicator);
+
+        function parseNumber(cell) {
+            const text = (cell && cell.textContent) ? cell.textContent : '';
+            const num = parseInt(text.replace(/[^0-9-]/g, ''), 10);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function sortRows(order) {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort(function (a, b) {
+                const aNum = parseNumber(a.querySelector('td:first-child'));
+                const bNum = parseNumber(b.querySelector('td:first-child'));
+                return order === 'asc' ? aNum - bNum : bNum - aNum;
+            });
+            rows.forEach(function (row) { tbody.appendChild(row); });
+        }
+
+        th.addEventListener('click', function () {
+            const newOrder = th.dataset.sortOrder === 'asc' ? 'desc' : 'asc';
+            th.dataset.sortOrder = newOrder;
+            th.setAttribute('aria-sort', newOrder === 'asc' ? 'ascending' : 'descending');
+            indicator.textContent = newOrder === 'asc' ? '▲' : '▼';
+            sortRows(newOrder);
+        });
+    });
+
     // ---- Mobile Hamburger Menu ----
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const sidebar = document.getElementById('sidebar');
