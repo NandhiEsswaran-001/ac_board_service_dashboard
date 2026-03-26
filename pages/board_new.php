@@ -11,6 +11,8 @@ $problem       = '';
 $approx_amount = 0;
 $customer_remarks = '';
 $remark_checks = [];
+$payment_status = 'Pending';
+$payment_amount = 0;
 
 $remark_items = [
     'Compressor Jack',
@@ -60,10 +62,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remark_checks = $_POST['remark_checks'] ?? [];
     $parts_inside   = trim($_POST['parts_inside'] ?? '');
     $approx_amount  = floatval($_POST['approx_amount'] ?? 0);
+    $payment_status = trim($_POST['payment_status'] ?? 'Pending');
+    $payment_amount = floatval($_POST['payment_amount'] ?? 0);
 
     if (!is_array($remark_checks)) { $remark_checks = []; }
     $remark_checks = array_values(array_intersect($remark_checks, $remark_items));
     $remark_checks_str = implode(', ', $remark_checks);
+    $payment_allowed = ['Pending', 'Paid', 'Partial'];
+    if (!in_array($payment_status, $payment_allowed, true)) {
+        $payment_status = 'Pending';
+    }
+    if ($payment_status !== 'Partial') {
+        $payment_amount = 0;
+    } elseif ($payment_amount < 0) {
+        $payment_amount = 0;
+    }
 
     if ($error) {
         // Skip validation when submission is invalid.
@@ -73,11 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db   = getDB();
         $stmt = $db->prepare("INSERT INTO board_services
             (customer_name, phone, address, ac_brand, ac_model, problem,
-             customer_remarks, remark_checks, parts_inside, approx_amount, status, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?,?,'Pending',?)");
+             customer_remarks, remark_checks, parts_inside, approx_amount, status, payment_status, payment_amount, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,'Pending',?,?,?)");
         $stmt->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
                         $problem, $customer_remarks, $remark_checks_str, $parts_inside,
-                        $approx_amount, $_SESSION['user_id']]);
+                        $approx_amount, $payment_status, $payment_amount, $_SESSION['user_id']]);
         $newId   = $db->lastInsertId();
         unset($_SESSION['board_new_token']);
         header('Location: board_view.php?id=' . $newId . '&created=1');
@@ -166,6 +179,20 @@ include '../includes/header.php';
                     <input type="number" name="approx_amount"
                            value="<?= htmlspecialchars($_POST['approx_amount'] ?? '') ?>"
                            placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Payment Status</label>
+                    <select name="payment_status">
+                        <?php foreach (['Pending', 'Paid', 'Partial'] as $ps): ?>
+                            <option value="<?= $ps ?>" <?= ($payment_status === $ps) ? 'selected' : '' ?>><?= $ps ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group" data-partial-amount style="display:none;">
+                    <label>Partial Payment Amount (???)</label>
+                    <input type="number" name="payment_amount"
+                           value="<?= htmlspecialchars($_POST['payment_amount'] ?? '') ?>"
+                           min="0" step="0.01" placeholder="0.00">
                 </div>
             </div>
 

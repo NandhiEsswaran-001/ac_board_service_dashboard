@@ -51,6 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $parts_replaced = trim($_POST['parts_replaced'] ?? '');
     $final_amount   = floatval($_POST['final_amount'] ?? 0);
     $notes          = trim($_POST['notes'] ?? '');
+    $payment_status = trim($_POST['payment_status'] ?? ($b['payment_status'] ?? 'Pending'));
+    $payment_amount = floatval($_POST['payment_amount'] ?? ($b['payment_amount'] ?? 0));
 
     if (!is_array($remark_checks)) { $remark_checks = []; }
     $remark_checks = array_values(array_intersect($remark_checks, $remark_items));
@@ -58,17 +60,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $allowed = ['Pending', 'In Process', 'Completed', 'Delivered'];
     $status  = in_array($_POST['status'] ?? '', $allowed) ? $_POST['status'] : $b['status'];
+    $payment_allowed = ['Pending', 'Paid', 'Partial'];
+    if (!in_array($payment_status, $payment_allowed, true)) {
+        $payment_status = $b['payment_status'] ?? 'Pending';
+    }
+    if ($payment_status !== 'Partial') {
+        $payment_amount = 0;
+    } elseif ($payment_amount < 0) {
+        $payment_amount = 0;
+    }
 
-    if (!$customer_name || !$phone || !$problem) {
-        $error = 'Customer name, phone, and problem are required.';
+    if (!$customer_name || !$phone) {
+        $error = 'Customer name and phone are required.';
     } else {
         $upd = $db->prepare("UPDATE board_services SET
             customer_name=?, phone=?, address=?, ac_brand=?, ac_model=?,
             problem=?, customer_remarks=?, remark_checks=?, parts_inside=?, approx_amount=?, parts_replaced=?,
-            final_amount=?, status=?, notes=? WHERE id=?");
+            final_amount=?, status=?, payment_status=?, payment_amount=?, notes=? WHERE id=?");
         $upd->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
                        $problem, $customer_remarks, $remark_checks_str, $parts_inside, $approx_amount, $parts_replaced,
-                       $final_amount, $status, $notes, $id]);
+                       $final_amount, $status, $payment_status, $payment_amount, $notes, $id]);
         header('Location: board_edit.php?id=' . $id . '&updated=1');
         exit;
     }
@@ -105,7 +116,7 @@ include '../includes/header.php';
                     <input type="text" name="customer_name" value="<?= htmlspecialchars($b['customer_name']) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label>Phone *</label>
+                    <label>Phone Number *</label>
                     <input type="tel" name="phone" value="<?= htmlspecialchars($b['phone']) ?>" required>
                 </div>
                 <div class="form-group full-width">
@@ -115,10 +126,10 @@ include '../includes/header.php';
             </div>
 
             <hr class="divider">
-            <div class="section-heading">AC Board Details</div>
+            <div class="section-heading">Board Details</div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>AC Brand</label>
+                    <label>Brand</label>
                     <input type="text" name="ac_brand" value="<?= htmlspecialchars($b['ac_brand']) ?>">
                 </div>
                 <div class="form-group">
@@ -126,8 +137,8 @@ include '../includes/header.php';
                     <input type="text" name="ac_model" value="<?= htmlspecialchars($b['ac_model']) ?>">
                 </div>
                 <div class="form-group full-width">
-                    <label>Problem Description *</label>
-                    <textarea name="problem" required><?= htmlspecialchars($b['problem']) ?></textarea>
+                    <label>Problem Description</label>
+                    <textarea name="problem"><?= htmlspecialchars($b['problem']) ?></textarea>
                 </div>
                 <div class="form-group full-width">
                     <label>Customer Remarks</label>
@@ -165,6 +176,20 @@ include '../includes/header.php';
                 <div class="form-group">
                     <label>Final Amount (₹)</label>
                     <input type="number" name="final_amount" value="<?= $b['final_amount'] ?>" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Payment Status</label>
+                    <select name="payment_status">
+                        <?php foreach (['Pending', 'Paid', 'Partial'] as $ps): ?>
+                        <option value="<?= $ps ?>" <?= ($b['payment_status'] ?? 'Pending') === $ps ? 'selected' : '' ?>><?= $ps ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group" data-partial-amount style="display:none;">
+                    <label>Partial Payment Amount (???)</label>
+                    <input type="number" name="payment_amount"
+                           value="<?= htmlspecialchars($b['payment_amount'] ?? '0') ?>"
+                           min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="form-group">
                     <label>Status *</label>

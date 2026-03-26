@@ -46,30 +46,58 @@ $inprocess  = $db->query("SELECT COUNT(*) FROM board_services WHERE status='In P
 $completed  = $db->query("SELECT COUNT(*) FROM board_services WHERE status='Completed'")->fetchColumn();
 $fieldTotal = $db->query("SELECT COUNT(*) FROM field_services")->fetchColumn();
 
-$boardAll = $db->query("SELECT COALESCE(SUM(final_amount),0)
+$boardAll = $db->query("SELECT COALESCE(SUM(
+                            CASE
+                                WHEN payment_status='Paid' THEN (CASE WHEN final_amount>0 THEN final_amount ELSE approx_amount END)
+                                WHEN payment_status='Partial' THEN payment_amount
+                                ELSE 0
+                            END
+                        ),0)
                         FROM board_services
                         WHERE status IN ('Completed','Delivered')")->fetchColumn();
-$fieldAll = $db->query("SELECT COALESCE(SUM(service_amount),0)
-                        FROM field_services
-                        WHERE payment_status='Paid'")->fetchColumn();
+$fieldAll = $db->query("SELECT COALESCE(SUM(
+                            CASE
+                                WHEN payment_status='Paid' THEN service_amount
+                                WHEN payment_status='Partial' THEN payment_amount
+                                ELSE 0
+                            END
+                        ),0)
+                        FROM field_services")->fetchColumn();
 $totalRevenueAll = $boardAll + $fieldAll;
 
 if ($revFilterMode === 'range') {
-    $boardRevenueStmt = $db->prepare("SELECT COALESCE(SUM(final_amount),0)
+    $boardRevenueStmt = $db->prepare("SELECT COALESCE(SUM(
+                                          CASE
+                                              WHEN payment_status='Paid' THEN (CASE WHEN final_amount>0 THEN final_amount ELSE approx_amount END)
+                                              WHEN payment_status='Partial' THEN payment_amount
+                                              ELSE 0
+                                          END
+                                      ),0)
                                       FROM board_services
                                       WHERE status IN ('Completed','Delivered')
                                         AND DATE(created_at) BETWEEN ? AND ?");
     $boardRevenueStmt->execute([$revFrom, $revTo]);
     $boardRevenue = $boardRevenueStmt->fetchColumn();
 
-    $fieldRevenueStmt = $db->prepare("SELECT COALESCE(SUM(service_amount),0)
+    $fieldRevenueStmt = $db->prepare("SELECT COALESCE(SUM(
+                                          CASE
+                                              WHEN payment_status='Paid' THEN service_amount
+                                              WHEN payment_status='Partial' THEN payment_amount
+                                              ELSE 0
+                                          END
+                                      ),0)
                                       FROM field_services
-                                      WHERE payment_status='Paid'
-                                        AND service_date BETWEEN ? AND ?");
+                                      WHERE service_date BETWEEN ? AND ?");
     $fieldRevenueStmt->execute([$revFrom, $revTo]);
     $fieldRevenue = $fieldRevenueStmt->fetchColumn();
 } else {
-    $boardRevenueStmt = $db->prepare("SELECT COALESCE(SUM(final_amount),0)
+    $boardRevenueStmt = $db->prepare("SELECT COALESCE(SUM(
+                                          CASE
+                                              WHEN payment_status='Paid' THEN (CASE WHEN final_amount>0 THEN final_amount ELSE approx_amount END)
+                                              WHEN payment_status='Partial' THEN payment_amount
+                                              ELSE 0
+                                          END
+                                      ),0)
                                       FROM board_services
                                       WHERE status IN ('Completed','Delivered')
                                         AND MONTH(created_at) = ?
@@ -77,11 +105,16 @@ if ($revFilterMode === 'range') {
     $boardRevenueStmt->execute([$revMonth, $revYear]);
     $boardRevenue = $boardRevenueStmt->fetchColumn();
 
-    $fieldRevenueStmt = $db->prepare("SELECT COALESCE(SUM(service_amount),0)
+    $fieldRevenueStmt = $db->prepare("SELECT COALESCE(SUM(
+                                          CASE
+                                              WHEN payment_status='Paid' THEN service_amount
+                                              WHEN payment_status='Partial' THEN payment_amount
+                                              ELSE 0
+                                          END
+                                      ),0)
                                       FROM field_services
-                                      WHERE payment_status='Paid'
-                                        AND MONTH(service_date) = ?
-                                        AND YEAR(service_date) = ?");
+                                      WHERE MONTH(service_date) = ?
+                                      AND YEAR(service_date) = ?");
     $fieldRevenueStmt->execute([$revMonth, $revYear]);
     $fieldRevenue = $fieldRevenueStmt->fetchColumn();
 }

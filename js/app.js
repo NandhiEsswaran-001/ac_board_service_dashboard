@@ -64,6 +64,29 @@ document.addEventListener('DOMContentLoaded', function () {
         statusFilter.addEventListener('change', applyTableFilters);
     }
 
+    // ---- Payment Status -> Partial Amount toggle ----
+    function togglePartialAmount(selectEl) {
+        if (!selectEl) return;
+        const form = selectEl.closest('form');
+        const partialWrap = form ? form.querySelector('[data-partial-amount]') : null;
+        if (!partialWrap) return;
+        const input = partialWrap.querySelector('input');
+        if (selectEl.value === 'Partial') {
+            partialWrap.style.display = '';
+            if (input) input.setAttribute('required', 'required');
+        } else {
+            partialWrap.style.display = 'none';
+            if (input) input.removeAttribute('required');
+        }
+    }
+
+    document.querySelectorAll('select[name="payment_status"]').forEach(function (selectEl) {
+        togglePartialAmount(selectEl);
+        selectEl.addEventListener('change', function () {
+            togglePartialAmount(selectEl);
+        });
+    });
+
     // ---- Table sorting on number column (#) ----
     document.querySelectorAll('table').forEach(function (table) {
         const thead = table.querySelector('thead');

@@ -16,8 +16,18 @@ if (isset($_GET['created'])) {
     $success = 'Field service entry created! Entry #' . $s['id'];
 }
 
-$wa_scheduled = "Hello Sir,\nYour AC service has been scheduled.\n\nProblem: {$s['problem']}\nService Date: " . date('d M Y', strtotime($s['service_date'])) . "\nTechnician: {$s['emp_name']}\n\nOur technician will visit you. Thank you!";
-$wa_completed = "Hello Sir,\nYour AC service has been completed.\n\nWork Done: {$s['work_done']}\nParts Used: {$s['parts_used']}\nService Amount: ₹" . number_format($s['service_amount'],2) . "\n\nThank you for choosing us!";
+$wa_items = '-';
+if (!empty($s['service_call_items'])) {
+    $decoded = json_decode($s['service_call_items'], true);
+    if (is_array($decoded)) {
+        $wa_items = $decoded ? implode(', ', $decoded) : '-';
+    } else {
+        $wa_items = trim((string)$s['service_call_items']) ?: '-';
+    }
+}
+
+$wa_scheduled = "HOT & COLD ENGINEERING\nAIR CONDITIONER SERVICE CENTER\n(ALL TYPES OF INVERTER / NON INVERTER)\nNo.488/490, KARPAGA VINAYAGAR MANSION,\n7TH STREET EXT'N, GANDHIPURAM, COIMBATORE 641012\n\n-------------------- RECEIPT --------------------\nJOB NO : {$s['id']}\nDATE   : " . date('d M Y', strtotime($s['service_date'])) . "\nSTATUS : SCHEDULED\n-------------------------------------------------\nNAME   : {$s['customer_name']}\nPHONE  : {$s['phone']}\nADDRESS: " . ($s['address'] ? $s['address'] : '-') . "\n-------------------------------------------------\nPRODUCT NAME        : " . ($s['ac_type'] ? $s['ac_type'] : '-') . "\nPRODUCT COMPANY     : " . ($s['product_company'] ? $s['product_company'] : '-') . "\nDATE OF PURCHASE    : " . ($s['purchase_date'] ? formatDate($s['purchase_date']) : '-') . "\nUNIT LOCATION       : " . ($s['unit_location'] ? $s['unit_location'] : '-') . "\nSERVICE REPORT NO   : " . ($s['service_report_no'] ? $s['service_report_no'] : '-') . "\nTECHNICIAN          : " . ($s['emp_name'] ? $s['emp_name'] : 'Unassigned') . "\nCOMPLAINT           : " . ($s['problem'] ? $s['problem'] : '-') . "\n-------------------------------------------------\nFOR HOT & COLD ENG\nAUTHORISED PERSON";
+$wa_completed = "HOT & COLD ENGINEERING\nAIR CONDITIONER SERVICE CENTER\n(ALL TYPES OF INVERTER / NON INVERTER)\nNo.488/490, KARPAGA VINAYAGAR MANSION,\n7TH STREET EXT'N, GANDHIPURAM, COIMBATORE 641012\n\n-------------------- RECEIPT --------------------\nJOB NO : {$s['id']}\nDATE   : " . date('d M Y', strtotime($s['service_date'])) . "\nSTATUS : COMPLETED\n-------------------------------------------------\nNAME   : {$s['customer_name']}\nPHONE  : {$s['phone']}\nADDRESS: " . ($s['address'] ? $s['address'] : '-') . "\n-------------------------------------------------\nPRODUCT NAME        : " . ($s['ac_type'] ? $s['ac_type'] : '-') . "\nPRODUCT COMPANY     : " . ($s['product_company'] ? $s['product_company'] : '-') . "\nDATE OF PURCHASE    : " . ($s['purchase_date'] ? formatDate($s['purchase_date']) : '-') . "\nUNIT LOCATION       : " . ($s['unit_location'] ? $s['unit_location'] : '-') . "\nSERVICE REPORT NO   : " . ($s['service_report_no'] ? $s['service_report_no'] : '-') . "\nTECHNICIAN          : " . ($s['emp_name'] ? $s['emp_name'] : 'Unassigned') . "\nCOMPLAINT           : " . ($s['problem'] ? $s['problem'] : '-') . "\n-------------------------------------------------\nJOB DONE            : " . ($s['work_done'] ? $s['work_done'] : '-') . "\nREPLACED SPARES     : " . ($s['parts_used'] ? $s['parts_used'] : '-') . "\nSERVICE CHARGE      : " . ($s['service_charge'] ? $s['service_charge'] : '-') . "\nSERVICE CALL ITEMS  : {$wa_items}\nWARRANTY            : " . ($s['warranty_text'] ? $s['warranty_text'] : '-') . "\n-------------------------------------------------\nAMOUNT IN RS.       : " . number_format($s['service_amount'], 2) . "\nPAYMENT STATUS      : " . ($s['payment_status'] ? $s['payment_status'] : '-') . "\n-------------------------------------------------\nFOR HOT & COLD ENG\nAUTHORISED PERSON";
 $wa_scheduled_url = whatsappLink((string)($s['phone'] ?? ''), $wa_scheduled);
 $wa_completed_url = whatsappLink((string)($s['phone'] ?? ''), $wa_completed);
 $map_link = trim($s['map_link'] ?? '');
@@ -160,6 +170,12 @@ include '../includes/header.php';
                 <label>Payment Status</label>
                 <div class="value"><?= statusBadge($s['payment_status']) ?></div>
             </div>
+            <?php if (($s['payment_status'] ?? '') === 'Partial'): ?>
+            <div class="detail-item">
+                <label>Partial Payment Amount</label>
+                <div class="value"><?= ($s['payment_amount'] ?? 0) > 0 ? formatAmount($s['payment_amount']) : '-' ?></div>
+            </div>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 
@@ -194,3 +210,4 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+

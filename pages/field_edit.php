@@ -49,12 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sd_pressure       = trim($_POST['sd_pressure'] ?? '');
     $service_call_items_text = trim($_POST['service_call_items'] ?? '');
     $service_amount    = floatval($_POST['service_amount'] ?? 0);
+    $payment_amount    = floatval($_POST['payment_amount'] ?? ($s['payment_amount'] ?? 0));
     $notes             = $s['notes'] ?? '';
 
     $validStatuses  = ['Scheduled', 'In Progress', 'Completed'];
     $validPayments  = ['Pending', 'Paid', 'Partial'];
     $status         = in_array($_POST['status'] ?? '', $validStatuses)         ? $_POST['status']         : $s['status'];
     $payment_status = in_array($_POST['payment_status'] ?? '', $validPayments) ? $_POST['payment_status'] : $s['payment_status'];
+    if ($payment_status !== 'Partial') {
+        $payment_amount = 0;
+    } elseif ($payment_amount < 0) {
+        $payment_amount = 0;
+    }
 
     if (!$customer_name || !$phone || !$address || !$service_date || !$problem) {
         $error = 'Customer name, phone, address, date, and problem are required.';
@@ -63,11 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             customer_name=?, phone=?, address=?, map_link=?, service_date=?, assigned_employee=?,
             ac_type=?, product_company=?, purchase_date=?, unit_location=?, problem=?, work_done=?,
             parts_used=?, service_charge=?, service_call_items=?, ampere=?, voltage=?, grill_temp=?, sd_pressure=?, warranty_text=?, service_amount=?,
-            payment_status=?, status=?, notes=? WHERE id=?");
+            payment_status=?, payment_amount=?, status=?, notes=? WHERE id=?");
         $upd->execute([$customer_name, $phone, $address, $map_link, $service_date,
                        $assigned_employee ?: null, $ac_type, $product_company, $purchase_date ?: null,
                        $unit_location, $problem, $work_done, $parts_used, $service_charge,
-                       $service_call_items_text, $ampere, $voltage, $grill_temp, $sd_pressure, $warranty_text, $service_amount, $payment_status,
+                       $service_call_items_text, $ampere, $voltage, $grill_temp, $sd_pressure, $warranty_text, $service_amount, $payment_status, $payment_amount,
                        $status, $notes, $id]);
         header('Location: field_edit.php?id=' . $id . '&updated=1');
         exit;
@@ -237,6 +243,12 @@ include '../includes/header.php';
                         <option value="<?= $p ?>" <?= $s['payment_status'] === $p ? 'selected' : '' ?>><?= $p ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group" data-partial-amount style="display:none;">
+                    <label>Partial Payment Amount (???)</label>
+                    <input type="number" name="payment_amount"
+                           value="<?= htmlspecialchars($s['payment_amount'] ?? '0') ?>"
+                           min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="form-group">
                     <label>Service Status</label>

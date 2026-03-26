@@ -33,8 +33,8 @@ if (isset($_GET['created'])) {
     $success = 'Board entry saved successfully! Entry #' . $b['id'];
 }
 
-$wa_received  = "Hello Sir,\nYour AC board has been received for service.\n\nProblem: {$b['problem']}\nApproximate Amount: ₹" . number_format($b['approx_amount'], 2) . "\nStatus: Pending\n\nThank you!";
-$wa_completed = "Hello Sir,\nYour AC board repair is completed.\n\nReplaced Parts: {$b['parts_replaced']}\nTotal Amount: ₹" . number_format($b['final_amount'], 2) . "\n\nYou can collect your board from the shop.\n\nThank you!";
+$wa_received  = "HOT & COLD ENGINEERING\nAIR CONDITIONER PCB SERVICE CENTER\n(ALL TYPES OF INVERTER / NON INVERTER)\nNo.488/490, KARPAGA VINAYAGAR MANSION,\n7TH STREET EXT'N, GANDHIPURAM, COIMBATORE 641012\n\n-------------------- RECEIPT --------------------\nJOB NO : {$b['id']}\nDATE   : " . date('d M Y', strtotime($b['created_at'])) . "\nSTATUS : PENDING\n-------------------------------------------------\nNAME   : {$b['customer_name']}\nPHONE  : {$b['phone']}\nADDRESS: " . ($b['address'] ? $b['address'] : '-') . "\n-------------------------------------------------\nBRAND / ERROR     : " . trim(($b['ac_brand'] ? $b['ac_brand'] : '-') . ($b['ac_model'] ? ' ' . $b['ac_model'] : '')) . "\nCUSTOMER REMARKS : " . ($b['customer_remarks'] ? $b['customer_remarks'] : '-') . "\n-------------------------------------------------\nAMOUNT IN RS.     : " . number_format($b['approx_amount'], 2) . "\n-------------------------------------------------\nFOR HOT & COLD ENG\nAUTHORISED PERSON";
+$wa_completed = "HOT & COLD ENGINEERING\nAIR CONDITIONER PCB SERVICE CENTER\n(ALL TYPES OF INVERTER / NON INVERTER)\nNo.488/490, KARPAGA VINAYAGAR MANSION,\n7TH STREET EXT'N, GANDHIPURAM, COIMBATORE 641012\n\n-------------------- RECEIPT --------------------\nJOB NO : {$b['id']}\nDATE   : " . date('d M Y', strtotime($b['created_at'])) . "\nSTATUS : COMPLETED\n-------------------------------------------------\nNAME   : {$b['customer_name']}\nPHONE  : {$b['phone']}\nADDRESS: " . ($b['address'] ? $b['address'] : '-') . "\n-------------------------------------------------\nBRAND / ERROR     : " . trim(($b['ac_brand'] ? $b['ac_brand'] : '-') . ($b['ac_model'] ? ' ' . $b['ac_model'] : '')) . "\nCUSTOMER REMARKS : " . ($b['customer_remarks'] ? $b['customer_remarks'] : '-') . "\nREPLACED PARTS   : " . ($b['parts_replaced'] ? $b['parts_replaced'] : '-') . "\n-------------------------------------------------\nAMOUNT IN RS.     : " . number_format($b['final_amount'] > 0 ? $b['final_amount'] : $b['approx_amount'], 2) . "\nRECEIVED GOODS   : " . date('d M Y') . "\n-------------------------------------------------\nFOR HOT & COLD ENG\nAUTHORISED PERSON";
 
 $wa_received_url  = whatsappLink((string)($b['phone'] ?? ''), $wa_received);
 $wa_completed_url = whatsappLink((string)($b['phone'] ?? ''), $wa_completed);
@@ -73,7 +73,7 @@ include '../includes/header.php';
                 <div class="value"><?= htmlspecialchars($b['customer_name']) ?></div>
             </div>
             <div class="detail-item">
-                <label>Phone</label>
+                <label>Phone Number</label>
                 <div class="value"><?= htmlspecialchars($b['phone']) ?></div>
             </div>
             <div class="detail-item">
@@ -87,10 +87,10 @@ include '../includes/header.php';
         </div>
 
         <hr class="divider">
-        <div class="section-heading">AC Board Details</div>
+        <div class="section-heading">Board Details</div>
         <div class="detail-grid">
             <div class="detail-item">
-                <label>AC Brand</label>
+                <label>Brand</label>
                 <div class="value"><?= $b['ac_brand'] ? htmlspecialchars($b['ac_brand']) : '-' ?></div>
             </div>
             <div class="detail-item">
@@ -98,7 +98,7 @@ include '../includes/header.php';
                 <div class="value"><?= $b['ac_model'] ? htmlspecialchars($b['ac_model']) : '-' ?></div>
             </div>
             <div class="detail-item detail-full">
-                <label>Problem</label>
+                <label>Problem Description</label>
                 <div class="value"><?= nl2br(htmlspecialchars($b['problem'])) ?></div>
             </div>
             <?php if (!empty($b['customer_remarks'])): ?>
@@ -134,6 +134,16 @@ include '../includes/header.php';
                 <label>Final Amount</label>
                 <div class="value"><?= $b['final_amount'] > 0 ? formatAmount($b['final_amount']) : '-' ?></div>
             </div>
+            <div class="detail-item">
+                <label>Payment Status</label>
+                <div class="value"><?= !empty($b['payment_status']) ? statusBadge($b['payment_status']) : '-' ?></div>
+            </div>
+            <?php if (($b['payment_status'] ?? '') === 'Partial'): ?>
+            <div class="detail-item">
+                <label>Partial Payment Amount</label>
+                <div class="value"><?= ($b['payment_amount'] ?? 0) > 0 ? formatAmount($b['payment_amount']) : '-' ?></div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <?php if ($b['parts_replaced'] || $b['notes']): ?>

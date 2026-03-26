@@ -40,7 +40,7 @@ include '../includes/header.php';
         <?php if ($success): ?><div class="alert alert-success"><?= htmlspecialchars($success) ?></div><?php endif; ?>
         <?php if ($error): ?><div class="alert alert-error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <div class="filter-bar">
-            <input type="text" id="tableSearch" placeholder="Search customer, phone, problem...">
+            <input type="text" id="tableSearch" placeholder="Search customer, phone number, problem...">
             <select id="statusFilter">
                 <option value="">All Status</option>
                 <option value="Pending">Pending</option>
@@ -57,12 +57,13 @@ include '../includes/header.php';
                 <tr>
                     <th>#</th>
                     <th>Customer Name</th>
-                    <th>Phone</th>
+                    <th>Phone Number</th>
                     <th>Brand</th>
-                    <th>Problem</th>
+                    <th>Problem Description</th>
                     <th>Approx. Amt</th>
                     <th>Final Amt</th>
                     <th>Status</th>
+                    <th>Payment</th>
                     <th>Date</th>
                     <th>Actions</th>
                 </tr>
@@ -78,6 +79,7 @@ include '../includes/header.php';
                     <td><?= formatAmount($b['approx_amount']) ?></td>
                     <td><?= $b['final_amount'] > 0 ? formatAmount($b['final_amount']) : '-' ?></td>
                     <td><?= statusBadge($b['status']) ?></td>
+                    <td><?= !empty($b['payment_status']) ? statusBadge($b['payment_status']) : '-' ?></td>
                     <td><?= date('d M Y', strtotime($b['created_at'])) ?></td>
                     <td>
                         <div class="flex-gap">

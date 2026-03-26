@@ -73,8 +73,10 @@ sendNoCacheHeaders();
         <a href="<?= $rootPath ?? '../' ?>pages/technician_report.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='technician_report.php')?'active':'' ?>">
             <span class="nav-icon">▪</span> Technician Report
         </a>
+        <a href="<?= $rootPath ?? '../' ?>pages/sales_report.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='sales_report.php')?'active':'' ?>">
+            <span class="nav-icon">▪</span> Sales Report
+        </a>
         <?php endif; ?>
-
         <?php if (isOwner()): ?>
         <div class="nav-section-label">ADMIN</div>
         <a href="<?= $rootPath ?? '../' ?>pages/users.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='users.php')?'active':'' ?>">
@@ -101,3 +103,4 @@ sendNoCacheHeaders();
         </div>
     </div>
     <div class="content-area">
+
