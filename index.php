@@ -66,4 +66,20 @@ require 'includes/public_header.php';
     </div>
 </section>
 
+<section class="brand-section">
+    <div class="container">
+        <div class="section-intro brand-section-intro">
+            <span class="eyebrow">Brands</span>
+            <h2>Brands we support</h2>
+            <p>
+                Service support is available for a wide range of trusted AC and home appliance brands.
+            </p>
+        </div>
+
+        <div class="brand-showcase">
+            <img src="assets/brands.png" alt="Supported brands including O General, Daikin, Mitsubishi Electric, Hitachi, LG, Blue Star, Voltas, Carrier, Samsung, Godrej, Whirlpool, Lloyd, IFB and Haier.">
+        </div>
+    </div>
+</section>
+
 <?php require 'includes/public_footer.php'; ?>
