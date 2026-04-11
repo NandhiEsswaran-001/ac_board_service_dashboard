@@ -7,99 +7,63 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-$error = '';
-
-// Show timeout notice
-if (isset($_GET['timeout'])) {
-    $error = 'Your session expired due to inactivity. Please log in again.';
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verifyCsrf();
-
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    // Rate limit check
-    $limitMsg = checkLoginRateLimit();
-    if ($limitMsg) {
-        $error = $limitMsg;
-    } elseif ($username && $password) {
-        $db   = getDB();
-        $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($password, $user['password'])) {
-            // Regenerate session ID on login to prevent fixation
-            session_regenerate_id(true);
-            clearLoginFailures();
-
-            $_SESSION['user_id']       = $user['id'];
-            $_SESSION['username']      = $user['username'];
-            $_SESSION['full_name']     = $user['full_name'];
-            $_SESSION['role']          = $user['role'];
-            $_SESSION['last_activity'] = time();
-
-            $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
-            header('Location: ' . $dest);
-            exit;
-        } else {
-            recordLoginFailure();
-            // Generic message — don't reveal whether username exists
-            $error = 'Invalid username or password.';
-        }
-    } else {
-        $error = 'Please enter username and password.';
-    }
-}
-
-$cssFile = __DIR__ . '/css/style.css';
-$cssVer = file_exists($cssFile) ? filemtime($cssFile) : time();
-$jsFile = __DIR__ . '/js/app.js';
-$jsVer = file_exists($jsFile) ? filemtime($jsFile) : time();
+$publicPage = 'home';
+$publicTitle = APP_NAME . ' | Home';
+require 'includes/public_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login – <?= APP_NAME ?></title>
-    <link rel="stylesheet" href="css/style.css?v=<?= $cssVer ?>">
-</head>
-<body class="login-page">
-<div class="login-box">
-    <div class="login-logo">
-        <div class="icon">❄</div>
-        <h2><?= APP_NAME ?></h2>
-        <p>Please login to continue</p>
-    </div>
 
-    <?php if ($error): ?>
-        <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
+<section class="hero-section">
+    <div class="container hero-grid hero-grid-single">
+        <div class="hero-copy">
+            <span class="eyebrow">Trusted Electronic Service Support In Coimbatore</span>
+            <h1>Reliable AC and appliance service with a clean, traditional business feel.</h1>
+            <p>
+                Hot &amp; Cold Engineering provides inverter AC, non-inverter AC, refrigerator,
+                washing machine and PCB chip-level service support for homes and commercial spaces.
+            </p>
 
-    <form method="POST" autocomplete="off">
-        <?= csrfField() ?>
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Enter username" autofocus required
-                   value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <div class="password-wrap">
-                <input type="password" id="password" name="password" placeholder="Enter password" required>
-                <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password">Show</button>
+            <div class="hero-points">
+                <div class="hero-point">All brand AC service</div>
+                <div class="hero-point">Commercial AC support</div>
+                <div class="hero-point">Chip-level diagnosis and repair</div>
+            </div>
+
+            <div class="hero-actions">
+                <a href="services.php" class="btn btn-primary btn-lg">Explore Services</a>
+                <a href="contact.php" class="btn btn-light btn-lg">Contact Us</a>
+                <a href="login.php" class="btn btn-secondary btn-lg">Login</a>
+            </div>
+
+            <div class="hero-contact-strip">
+                <span>Call: <a href="tel:+919087333397">90873 33397</a></span>
+                <span>Support: <a href="tel:+919500933390">95009 33390</a></span>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary btn-block btn-lg mt-10">Login</button>
-    </form>
+    </div>
+</section>
 
-    <p style="text-align:center;margin-top:18px;font-size:12px;color:#95a5a6;">
-        <?= APP_NAME ?> &copy; <?= date('Y') ?>
-    </p>
-</div>
-<script src="js/app.js?v=<?= $jsVer ?>"></script>
-</body>
-</html>
+<section class="info-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="eyebrow">Welcome</span>
+            <h2>Professional service for cooling appliances and electronic boards.</h2>
+            <p>
+                We keep our website clean and straightforward, just like our service process. Customers can
+                quickly understand what we do, where we work and how to reach us.
+            </p>
+        </div>
+
+        <div class="service-grid">
+            <article class="service-card">
+                <h3>Residential Support</h3>
+                <p>Dependable service for AC, fridge and washing machine needs with a practical service-center approach.</p>
+            </article>
+            <article class="service-card">
+                <h3>Commercial Support</h3>
+                <p>Commercial AC servicing focused on smooth operation, reliable response and maintenance support.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<?php require 'includes/public_footer.php'; ?>

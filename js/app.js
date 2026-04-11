@@ -172,6 +172,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ---- Public mobile menu ----
+    const publicMenuBtn = document.getElementById('publicMenuBtn');
+    const publicNav = document.getElementById('publicNav');
+    const publicNavOverlay = document.getElementById('publicNavOverlay');
+
+    function openPublicNav() {
+        if (!publicMenuBtn || !publicNav) return;
+        publicMenuBtn.classList.add('is-open');
+        publicMenuBtn.setAttribute('aria-expanded', 'true');
+        publicNav.classList.add('open');
+        if (publicNavOverlay) publicNavOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePublicNav() {
+        if (!publicMenuBtn || !publicNav) return;
+        publicMenuBtn.classList.remove('is-open');
+        publicMenuBtn.setAttribute('aria-expanded', 'false');
+        publicNav.classList.remove('open');
+        if (publicNavOverlay) publicNavOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (publicMenuBtn && publicNav) {
+        publicMenuBtn.addEventListener('click', function () {
+            if (publicNav.classList.contains('open')) {
+                closePublicNav();
+            } else {
+                openPublicNav();
+            }
+        });
+
+        publicNav.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth <= 900) closePublicNav();
+            });
+        });
+    }
+
+    if (publicNavOverlay) {
+        publicNavOverlay.addEventListener('click', closePublicNav);
+    }
+
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 900) {
+            closePublicNav();
+        }
+    });
+
     // ---- Password visibility toggle ----
     document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {

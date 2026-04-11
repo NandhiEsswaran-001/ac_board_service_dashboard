@@ -42,7 +42,7 @@ function checkSessionTimeout() {
                 $p['path'], $p['domain'], $p['secure'], $p['httponly']);
         }
         session_destroy();
-        header('Location: ' . getAppRoot() . 'index.php?timeout=1');
+        header('Location: ' . getAppRoot() . 'login.php?timeout=1');
         exit;
     }
     $_SESSION['last_activity'] = time();
@@ -100,7 +100,7 @@ function getDB() {
 function requireLogin() {
     checkSessionTimeout();
     if (!isset($_SESSION['user_id'])) {
-        header('Location: ' . getAppRoot() . 'index.php');
+        header('Location: ' . getAppRoot() . 'login.php');
         exit;
     }
 }
