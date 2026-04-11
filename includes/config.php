@@ -252,6 +252,7 @@ function statusBadge($status) {
         'In Process'  => '#2980b9',
         'Completed'   => '#27ae60',
         'Delivered'   => '#7f8c8d',
+        'Return'      => '#c0392b',
         'Scheduled'   => '#8e44ad',
         'In Progress' => '#2980b9',
         'Paid'        => '#27ae60',

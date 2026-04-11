@@ -47,6 +47,7 @@ include '../includes/header.php';
                 <option value="In Process">In Process</option>
                 <option value="Completed">Completed</option>
                 <option value="Delivered">Delivered</option>
+                <option value="Return">Return</option>
             </select>
         </div>
     </div>

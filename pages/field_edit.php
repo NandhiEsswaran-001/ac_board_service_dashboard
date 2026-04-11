@@ -52,6 +52,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_amount    = floatval($_POST['payment_amount'] ?? ($s['payment_amount'] ?? 0));
     $notes             = $s['notes'] ?? '';
 
+    if ($service_date === '') {
+        $service_date = null;
+    }
+    if ($purchase_date === '') {
+        $purchase_date = null;
+    }
+
     $validStatuses  = ['Scheduled', 'In Progress', 'Completed'];
     $validPayments  = ['Pending', 'Paid', 'Partial'];
     $status         = in_array($_POST['status'] ?? '', $validStatuses)         ? $_POST['status']         : $s['status'];
@@ -62,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $payment_amount = 0;
     }
 
-    if (!$customer_name || !$phone || !$address || !$service_date || !$problem) {
-        $error = 'Customer name, phone, address, date, and problem are required.';
+    if (!$customer_name || !$phone) {
+        $error = 'Customer name and phone are required.';
     } else {
         $upd = $db->prepare("UPDATE field_services SET
             customer_name=?, phone=?, address=?, map_link=?, service_date=?, assigned_employee=?,
@@ -124,7 +131,7 @@ include '../includes/header.php';
                 </div>
                 <div class="form-group full-width">
                     <label>Address *</label>
-                    <textarea name="address" required><?= htmlspecialchars($s['address']) ?></textarea>
+                    <textarea name="address"><?= htmlspecialchars($s['address']) ?></textarea>
                 </div>
             </div>
 
@@ -133,7 +140,7 @@ include '../includes/header.php';
             <div class="form-grid">
                 <div class="form-group">
                     <label>Service Date *</label>
-                    <input type="date" name="service_date" value="<?= $s['service_date'] ?>" required>
+                    <input type="date" name="service_date" value="<?= $s['service_date'] ?>">
                 </div>
                 <div class="form-group">
                     <label>Assigned Technician</label>
@@ -172,7 +179,7 @@ include '../includes/header.php';
                 </div>
                 <div class="form-group full-width">
                     <label>Complaint *</label>
-                    <textarea name="problem" class="textarea-lg" required><?= htmlspecialchars($s['problem']) ?></textarea>
+                    <textarea name="problem" class="textarea-lg"><?= htmlspecialchars($s['problem']) ?></textarea>
                 </div>
             </div>
 

@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remark_checks = array_values(array_intersect($remark_checks, $remark_items));
     $remark_checks_str = implode(', ', $remark_checks);
 
-    $allowed = ['Pending', 'In Process', 'Completed', 'Delivered'];
+    $allowed = ['Pending', 'In Process', 'Completed', 'Delivered', 'Return'];
     $status  = in_array($_POST['status'] ?? '', $allowed) ? $_POST['status'] : $b['status'];
     $payment_allowed = ['Pending', 'Paid', 'Partial'];
     if (!in_array($payment_status, $payment_allowed, true)) {
@@ -194,7 +194,7 @@ include '../includes/header.php';
                 <div class="form-group">
                     <label>Status *</label>
                     <select name="status">
-                        <?php foreach (['Pending', 'In Process', 'Completed', 'Delivered'] as $s): ?>
+                        <?php foreach (['Pending', 'In Process', 'Completed', 'Delivered', 'Return'] as $s): ?>
                         <option value="<?= $s ?>" <?= $b['status'] === $s ? 'selected' : '' ?>><?= $s ?></option>
                         <?php endforeach; ?>
                     </select>

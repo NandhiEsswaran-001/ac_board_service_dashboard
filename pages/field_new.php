@@ -43,6 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_amount    = floatval($_POST['payment_amount'] ?? 0);
     $notes             = '';
 
+    if ($service_date === '') {
+        $service_date = null;
+    }
+
     $validStatuses  = ['Scheduled', 'In Progress', 'Completed'];
     $validPayments  = ['Pending', 'Paid', 'Partial'];
     $status         = in_array($_POST['status'] ?? '', $validStatuses)         ? $_POST['status']         : 'Scheduled';
@@ -193,7 +197,7 @@ include '../includes/header.php';
                     <label>Complaint</label>
                     <textarea name="problem" class="textarea-lg"
                               placeholder="Describe the issue reported by the customer"
-                              required><?= htmlspecialchars($_POST['problem'] ?? '') ?></textarea>
+                              ><?= htmlspecialchars($_POST['problem'] ?? '') ?></textarea>
                 </div>
                 <div class="form-group full-width">
                     <label>Job Done</label>

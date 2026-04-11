@@ -19,7 +19,7 @@ $filterFrom = normalizeDate($_GET['from'] ?? $monthStart, $monthStart);
 $filterTo   = normalizeDate($_GET['to'] ?? $today, $today);
 $filterType = in_array($_GET['type'] ?? 'all', ['all','board','field'], true) ? ($_GET['type'] ?? 'all') : 'all';
 
-$boardStatusAllowed   = ['', 'Pending', 'In Process', 'Completed', 'Delivered'];
+$boardStatusAllowed   = ['', 'Pending', 'In Process', 'Completed', 'Delivered', 'Return'];
 $fieldStatusAllowed   = ['', 'Scheduled', 'In Progress', 'Completed'];
 $paymentStatusAllowed = ['', 'Pending', 'Paid', 'Partial'];
 
