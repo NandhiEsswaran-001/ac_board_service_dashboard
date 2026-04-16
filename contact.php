@@ -2,7 +2,7 @@
 require_once 'includes/config.php';
 
 if (isset($_SESSION['user_id'])) {
-    $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+    $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -12,17 +12,21 @@ $publicTitle = APP_NAME . ' | Contact Us';
 require 'includes/public_header.php';
 ?>
 
-<section class="info-section contact-section">
-    <div class="container">
-        <div class="section-intro">
+<section class="contact-hero-section">
+    <div class="contact-hero-card">
+        <div class="contact-hero-overlay">
             <span class="eyebrow">Contact Us</span>
-            <h2>Reach our service center for enquiries, support and service coordination.</h2>
+            <h1>Reach our service center for enquiries, support and service coordination.</h1>
             <p>
                 For service updates, repair enquiries and support requests, customers can connect using the
                 phone numbers and address from the business card details.
             </p>
         </div>
+    </div>
+</section>
 
+<section class="info-section contact-section">
+    <div class="container">
         <div class="contact-grid">
             <div class="contact-card">
                 <h3>Phone Numbers</h3>
@@ -31,7 +35,7 @@ require 'includes/public_header.php';
             </div>
             <div class="contact-card">
                 <h3>Address</h3>
-                <p>488/490, 7th Street Extn, Karpaga Vinayagar Mansion, Gandhipuram, Coimbatore - 12</p>
+                <p>97, 1st floor, 7th street, tatabad, near 6 Corner,<br>Coimbatore - 641012</p>
             </div>
             <div class="contact-card">
                 <h3>Branch Locations</h3>
@@ -41,6 +45,7 @@ require 'includes/public_header.php';
             <div class="contact-card">
                 <h3>Business Focus</h3>
                 <p>PCB chip level service center for AC, fridge, washing machine and commercial AC related repairs.</p>
+                <p>Serving customers since 2013.</p>
             </div>
         </div>
     </div>

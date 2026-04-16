@@ -2,7 +2,7 @@
 require_once 'includes/config.php';
 
 if (isset($_SESSION['user_id'])) {
-    $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+    $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -39,6 +39,19 @@ require 'includes/public_header.php';
                     and support that fits both household and service-center needs.
                 </p>
             </div>
+        </div>
+    </div>
+</section>
+
+<section class="info-section">
+    <div class="container">
+        <div class="section-intro">
+            <span class="eyebrow">Since 2013</span>
+            <h2>Serving customers with dependable appliance and PCB repair support since 2013.</h2>
+            <p>
+                Our business has been supporting homes, service needs and commercial clients in and around
+                Coimbatore since 2013 with consistent service and practical repair experience.
+            </p>
         </div>
     </div>
 </section>

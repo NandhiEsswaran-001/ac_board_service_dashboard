@@ -45,7 +45,7 @@ sendNoCacheHeaders();
     </div>
 
     <nav class="sidebar-nav">
-        <?php if (isOwner()): ?>
+        <?php if (isDashboardUser()): ?>
         <div class="nav-section-label">MAIN</div>
         <a href="<?= $rootPath ?? '../' ?>pages/dashboard.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='dashboard.php')?'active':'' ?>">
             <span class="nav-icon">▪</span> Dashboard
@@ -69,6 +69,14 @@ sendNoCacheHeaders();
         </a>
 
         <?php if (isOwner()): ?>
+        <div class="nav-section-label">SERVICE MANAGER</div>
+        <a href="<?= $rootPath ?? '../' ?>pages/call_register_list.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='call_register_list.php')?'active':'' ?>">
+            <span class="nav-icon">▪</span> Call Register
+        </a>
+        <a href="<?= $rootPath ?? '../' ?>pages/call_register_new.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='call_register_new.php')?'active':'' ?>">
+            <span class="nav-icon">▪</span> New Call Entry
+        </a>
+
         <div class="nav-section-label">REPORTS</div>
         <a href="<?= $rootPath ?? '../' ?>pages/technician_report.php" class="nav-item <?= (basename($_SERVER['PHP_SELF'])=='technician_report.php')?'active':'' ?>">
             <span class="nav-icon">▪</span> Technician Report

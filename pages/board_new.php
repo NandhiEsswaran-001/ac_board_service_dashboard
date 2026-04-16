@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/config.php';
+ensureBoardServiceImageColumns();
 $pageTitle = 'New Board Entry';
 
 $success      = '';
@@ -83,18 +84,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!$customer_name || !$phone) {
         $error = 'Customer name and phone are required.';
     } else {
-        $db   = getDB();
-        $stmt = $db->prepare("INSERT INTO board_services
-            (customer_name, phone, address, ac_brand, ac_model, problem,
-             customer_remarks, remark_checks, parts_inside, approx_amount, status, payment_status, payment_amount, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?,?,'Pending',?,?,?)");
-        $stmt->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
-                        $problem, $customer_remarks, $remark_checks_str, $parts_inside,
-                        $approx_amount, $payment_status, $payment_amount, $_SESSION['user_id']]);
-        $newId   = $db->lastInsertId();
-        unset($_SESSION['board_new_token']);
-        header('Location: board_view.php?id=' . $newId . '&created=1');
-        exit;
+        try {
+            $image_one_path = handleBoardImageUpload('board_image_1');
+            $image_two_path = handleBoardImageUpload('board_image_2');
+
+            $db   = getDB();
+            $stmt = $db->prepare("INSERT INTO board_services
+                (customer_name, phone, address, ac_brand, ac_model, problem,
+                 customer_remarks, remark_checks, parts_inside, image_one_path, image_two_path,
+                 approx_amount, status, payment_status, payment_amount, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'Pending',?,?,?)");
+            $stmt->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
+                            $problem, $customer_remarks, $remark_checks_str, $parts_inside,
+                            $image_one_path, $image_two_path, $approx_amount, $payment_status, $payment_amount, $_SESSION['user_id']]);
+            $newId   = $db->lastInsertId();
+            unset($_SESSION['board_new_token']);
+            header('Location: board_view.php?id=' . $newId . '&created=1');
+            exit;
+        } catch (RuntimeException $e) {
+            $error = $e->getMessage();
+        }
     }
 }
 
@@ -108,7 +117,7 @@ include '../includes/header.php';
 <div class="card">
     <div class="card-header"><span class="card-title">Board Entry Form</span></div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <?= csrfField() ?>
             <input type="hidden" name="form_token" value="<?= htmlspecialchars($form_token) ?>">
 
@@ -173,6 +182,14 @@ include '../includes/header.php';
                     <label>Parts Inside Board</label>
                     <textarea name="parts_inside"
                               placeholder="List the parts/components found inside the board"><?= htmlspecialchars($_POST['parts_inside'] ?? '') ?></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Board Image 1</label>
+                    <input type="file" name="board_image_1" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Board Image 2</label>
+                    <input type="file" name="board_image_2" accept="image/*">
                 </div>
                 <div class="form-group">
                     <label>Approximate Amount (₹)</label>

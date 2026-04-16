@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/config.php';
+ensureBoardServiceImageColumns();
 $pageTitle = 'Edit Board Entry';
 
 $id = intval($_GET['id'] ?? 0);
@@ -53,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes          = trim($_POST['notes'] ?? '');
     $payment_status = trim($_POST['payment_status'] ?? ($b['payment_status'] ?? 'Pending'));
     $payment_amount = floatval($_POST['payment_amount'] ?? ($b['payment_amount'] ?? 0));
+    $image_one_path = $b['image_one_path'] ?? null;
+    $image_two_path = $b['image_two_path'] ?? null;
 
     if (!is_array($remark_checks)) { $remark_checks = []; }
     $remark_checks = array_values(array_intersect($remark_checks, $remark_items));
@@ -73,15 +76,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$customer_name || !$phone) {
         $error = 'Customer name and phone are required.';
     } else {
-        $upd = $db->prepare("UPDATE board_services SET
-            customer_name=?, phone=?, address=?, ac_brand=?, ac_model=?,
-            problem=?, customer_remarks=?, remark_checks=?, parts_inside=?, approx_amount=?, parts_replaced=?,
-            final_amount=?, status=?, payment_status=?, payment_amount=?, notes=? WHERE id=?");
-        $upd->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
-                       $problem, $customer_remarks, $remark_checks_str, $parts_inside, $approx_amount, $parts_replaced,
-                       $final_amount, $status, $payment_status, $payment_amount, $notes, $id]);
-        header('Location: board_edit.php?id=' . $id . '&updated=1');
-        exit;
+        try {
+            $newImageOne = handleBoardImageUpload('board_image_1');
+            $newImageTwo = handleBoardImageUpload('board_image_2');
+
+            if ($newImageOne) {
+                $image_one_path = $newImageOne;
+            }
+            if ($newImageTwo) {
+                $image_two_path = $newImageTwo;
+            }
+
+            $upd = $db->prepare("UPDATE board_services SET
+                customer_name=?, phone=?, address=?, ac_brand=?, ac_model=?,
+                problem=?, customer_remarks=?, remark_checks=?, parts_inside=?, image_one_path=?, image_two_path=?, approx_amount=?, parts_replaced=?,
+                final_amount=?, status=?, payment_status=?, payment_amount=?, notes=? WHERE id=?");
+            $upd->execute([$customer_name, $phone, $address, $ac_brand, $ac_model,
+                           $problem, $customer_remarks, $remark_checks_str, $parts_inside, $image_one_path, $image_two_path, $approx_amount, $parts_replaced,
+                           $final_amount, $status, $payment_status, $payment_amount, $notes, $id]);
+            header('Location: board_edit.php?id=' . $id . '&updated=1');
+            exit;
+        } catch (RuntimeException $e) {
+            $error = $e->getMessage();
+        }
     }
 }
 
@@ -106,7 +123,7 @@ include '../includes/header.php';
         <?= statusBadge($b['status']) ?>
     </div>
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <?= csrfField() ?>
 
             <div class="section-heading">Customer Information</div>
@@ -159,6 +176,39 @@ include '../includes/header.php';
                 <div class="form-group full-width">
                     <label>Parts Inside Board</label>
                     <textarea name="parts_inside"><?= htmlspecialchars($b['parts_inside']) ?></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>Board Images</label>
+                    <div class="board-image-grid">
+                        <div class="board-image-slot">
+                            <?php if (!empty($b['image_one_path'])): ?>
+                            <a href="../<?= htmlspecialchars($b['image_one_path']) ?>" target="_blank" rel="noopener noreferrer" class="board-image-card">
+                                <img src="../<?= htmlspecialchars($b['image_one_path']) ?>" alt="Board image 1" class="board-image-preview">
+                                <span class="board-image-caption">Saved Image 1</span>
+                            </a>
+                            <?php else: ?>
+                            <div class="board-image-empty">No image added for slot 1</div>
+                            <?php endif; ?>
+                            <div class="mt-10">
+                                <label>Replace / Add Image 1</label>
+                                <input type="file" name="board_image_1" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="board-image-slot">
+                            <?php if (!empty($b['image_two_path'])): ?>
+                            <a href="../<?= htmlspecialchars($b['image_two_path']) ?>" target="_blank" rel="noopener noreferrer" class="board-image-card">
+                                <img src="../<?= htmlspecialchars($b['image_two_path']) ?>" alt="Board image 2" class="board-image-preview">
+                                <span class="board-image-caption">Saved Image 2</span>
+                            </a>
+                            <?php else: ?>
+                            <div class="board-image-empty">No image added for slot 2</div>
+                            <?php endif; ?>
+                            <div class="mt-10">
+                                <label>Replace / Add Image 2</label>
+                                <input type="file" name="board_image_2" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Approximate Amount (₹)</label>

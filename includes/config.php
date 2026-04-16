@@ -109,6 +109,22 @@ function isOwner() {
     return isset($_SESSION['role']) && $_SESSION['role'] === 'owner';
 }
 
+function isTechnician() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'technician';
+}
+
+function isDashboardUser() {
+    return isOwner() || isTechnician();
+}
+
+function requireOwner() {
+    requireLogin();
+    if (!isOwner()) {
+        header('Location: ' . getAppRoot() . 'pages/dashboard.php');
+        exit;
+    }
+}
+
 // ---- CSRF ----
 function csrfToken() {
     if (empty($_SESSION['csrf_token'])) {
@@ -270,4 +286,142 @@ function whatsappLink($phone, $message) {
     $phone = preg_replace('/[^0-9]/', '', $phone);
     if (strlen($phone) === 10) $phone = '91' . $phone;
     return 'whatsapp://send?phone=' . $phone . '&text=' . rawurlencode($message);
+}
+
+function appUrl($path = '') {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? '') === '443');
+    $scheme = $https ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $root = rtrim(getAppRoot(), '/');
+    $path = ltrim((string)$path, '/');
+
+    if ($path === '') {
+        return $scheme . '://' . $host . $root . '/';
+    }
+
+    return $scheme . '://' . $host . $root . '/' . $path;
+}
+
+function ensureCallRegistersTable() {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+
+    $sql = "CREATE TABLE IF NOT EXISTS call_registers (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                customer_name VARCHAR(100) NOT NULL,
+                address TEXT DEFAULT NULL,
+                complaint TEXT DEFAULT NULL,
+                assigned_technician_id INT(11) DEFAULT NULL,
+                phone VARCHAR(20) NOT NULL,
+                product_name VARCHAR(100) DEFAULT NULL,
+                status ENUM('New','Assigned','In Progress','Completed') DEFAULT 'Assigned',
+                created_by INT(11) DEFAULT NULL,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY assigned_technician_id (assigned_technician_id),
+                KEY created_by (created_by),
+                CONSTRAINT call_registers_ibfk_1 FOREIGN KEY (assigned_technician_id) REFERENCES users (id) ON DELETE SET NULL,
+                CONSTRAINT call_registers_ibfk_2 FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+    getDB()->exec($sql);
+    $done = true;
+}
+
+function buildCallRegisterWhatsappMessage(array $call, $technicianName = '') {
+    $assignedTech = trim((string)$technicianName);
+    if ($assignedTech === '') {
+        $assignedTech = 'Will be assigned shortly';
+    }
+
+    $jobDate = !empty($call['created_at']) ? date('d M Y', strtotime($call['created_at'])) : date('d M Y');
+
+    return "HOT & COLD ENGINEERING\n"
+        . "SERVICE MANAGER - CALL REGISTER\n"
+        . "---------------------------------------------\n"
+        . "CALL NO            : " . ($call['id'] ?? '-') . "\n"
+        . "DATE               : " . $jobDate . "\n"
+        . "CUSTOMER NAME      : " . (($call['customer_name'] ?? '') !== '' ? $call['customer_name'] : '-') . "\n"
+        . "PHONE              : " . (($call['phone'] ?? '') !== '' ? $call['phone'] : '-') . "\n"
+        . "ADDRESS            : " . (($call['address'] ?? '') !== '' ? $call['address'] : '-') . "\n"
+        . "PRODUCT NAME       : " . (($call['product_name'] ?? '') !== '' ? $call['product_name'] : '-') . "\n"
+        . "COMPLAINT          : " . (($call['complaint'] ?? '') !== '' ? $call['complaint'] : '-') . "\n"
+        . "ASSIGNED TECHNICIAN: " . $assignedTech . "\n"
+        . "STATUS             : " . (($call['status'] ?? '') !== '' ? $call['status'] : 'Assigned') . "\n"
+        . "---------------------------------------------\n"
+        . "Our technician will contact you shortly.\n"
+        . "Thank you for choosing Hot & Cold Engineering.";
+}
+
+function ensureBoardServiceImageColumns() {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+
+    $db = getDB();
+    $columns = $db->query("SHOW COLUMNS FROM board_services")->fetchAll(PDO::FETCH_COLUMN, 0);
+
+    if (!in_array('image_one_path', $columns, true)) {
+        $db->exec("ALTER TABLE board_services ADD COLUMN image_one_path VARCHAR(255) DEFAULT NULL AFTER parts_inside");
+    }
+    if (!in_array('image_two_path', $columns, true)) {
+        $db->exec("ALTER TABLE board_services ADD COLUMN image_two_path VARCHAR(255) DEFAULT NULL AFTER image_one_path");
+    }
+
+    $done = true;
+}
+
+function getBoardUploadsDir() {
+    $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'board_images';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0775, true);
+    }
+    return $dir;
+}
+
+function handleBoardImageUpload($fieldName) {
+    if (empty($_FILES[$fieldName]) || !is_array($_FILES[$fieldName])) {
+        return null;
+    }
+
+    $file = $_FILES[$fieldName];
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Image upload failed. Please try again.');
+    }
+
+    $tmpName = $file['tmp_name'] ?? '';
+    if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+        throw new RuntimeException('Invalid uploaded image.');
+    }
+
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($tmpName);
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp',
+        'image/gif'  => 'gif',
+    ];
+
+    if (!isset($allowed[$mime])) {
+        throw new RuntimeException('Only JPG, PNG, WEBP, or GIF images are allowed.');
+    }
+
+    $uploadDir = getBoardUploadsDir();
+    $fileName = $fieldName . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+    $target = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+
+    if (!move_uploaded_file($tmpName, $target)) {
+        throw new RuntimeException('Could not save the uploaded image.');
+    }
+
+    return 'uploads/board_images/' . $fileName;
 }

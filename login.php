@@ -2,7 +2,7 @@
 require_once 'includes/config.php';
 
 if (isset($_SESSION['user_id'])) {
-    $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+    $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role']          = $user['role'];
             $_SESSION['last_activity'] = time();
 
-            $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+            $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
             header('Location: ' . $dest);
             exit;
         } else {

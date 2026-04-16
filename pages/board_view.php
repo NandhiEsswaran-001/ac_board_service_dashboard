@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/config.php';
+ensureBoardServiceImageColumns();
 $pageTitle = 'View Board Entry';
 
 $id = intval($_GET['id'] ?? 0);
@@ -121,6 +122,31 @@ include '../includes/header.php';
                 <label>Parts Inside Board</label>
                 <div class="value"><?= $b['parts_inside'] ? nl2br(htmlspecialchars($b['parts_inside'])) : '-' ?></div>
             </div>
+            <?php if (!empty($b['image_one_path']) || !empty($b['image_two_path'])): ?>
+            <div class="detail-item detail-full">
+                <label>Board Images</label>
+                <div class="board-image-gallery">
+                    <div class="board-image-gallery-head">
+                        <span>Attached board photos</span>
+                        <small>Click any image to open full size</small>
+                    </div>
+                    <div class="board-image-grid">
+                    <?php if (!empty($b['image_one_path'])): ?>
+                    <a href="../<?= htmlspecialchars($b['image_one_path']) ?>" target="_blank" rel="noopener noreferrer" class="board-image-card">
+                        <img src="../<?= htmlspecialchars($b['image_one_path']) ?>" alt="Board image 1" class="board-image-preview">
+                        <span class="board-image-caption">Board Image 1</span>
+                    </a>
+                    <?php endif; ?>
+                    <?php if (!empty($b['image_two_path'])): ?>
+                    <a href="../<?= htmlspecialchars($b['image_two_path']) ?>" target="_blank" rel="noopener noreferrer" class="board-image-card">
+                        <img src="../<?= htmlspecialchars($b['image_two_path']) ?>" alt="Board image 2" class="board-image-preview">
+                        <span class="board-image-caption">Board Image 2</span>
+                    </a>
+                    <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <hr class="divider">

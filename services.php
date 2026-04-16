@@ -2,7 +2,7 @@
 require_once 'includes/config.php';
 
 if (isset($_SESSION['user_id'])) {
-    $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+    $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
     header('Location: ' . $dest);
     exit;
 }

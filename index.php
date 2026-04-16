@@ -2,7 +2,7 @@
 require_once 'includes/config.php';
 
 if (isset($_SESSION['user_id'])) {
-    $dest = isOwner() ? 'pages/dashboard.php' : 'pages/board_list.php';
+    $dest = isDashboardUser() ? 'pages/dashboard.php' : 'pages/board_list.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -62,6 +62,19 @@ require 'includes/public_header.php';
                 <h3>Commercial Support</h3>
                 <p>Commercial AC servicing focused on smooth operation, reliable response and maintenance support.</p>
             </article>
+        </div>
+    </div>
+</section>
+
+<section class="since-banner-section">
+    <div class="since-banner-card">
+        <div class="since-banner-overlay">
+            <span class="eyebrow">Since 2013</span>
+            <h2>Trusted appliance and AC service support built on experience since 2013.</h2>
+            <p>
+                Since 2013, Hot &amp; Cold Engineering has been serving customers with dependable AC,
+                refrigerator, washing machine and PCB chip-level repair support in Coimbatore.
+            </p>
         </div>
     </div>
 </section>
