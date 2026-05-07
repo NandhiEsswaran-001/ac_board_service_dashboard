@@ -221,6 +221,87 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // ---- Hero Slider ----
+    const heroSlider = document.getElementById('heroSlider');
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    const heroDots = document.querySelectorAll('.hero-dot');
+    const heroPrev = document.getElementById('heroPrev');
+    const heroNext = document.getElementById('heroNext');
+
+    let currentSlide = 0;
+    let slideInterval;
+
+    function showSlide(index) {
+        if (!heroSlides.length) return;
+        heroSlides.forEach(slide => slide.classList.remove('active'));
+        heroDots.forEach(dot => dot.classList.remove('active'));
+
+        heroSlides[index].classList.add('active');
+        if (heroDots[index]) {
+            heroDots[index].classList.add('active');
+        }
+        currentSlide = index;
+    }
+
+    function nextSlide() {
+        const nextIndex = (currentSlide + 1) % heroSlides.length;
+        showSlide(nextIndex);
+    }
+
+    function prevSlide() {
+        const prevIndex = (currentSlide - 1 + heroSlides.length) % heroSlides.length;
+        showSlide(prevIndex);
+    }
+
+    function startAutoSlide() {
+        stopAutoSlide();
+        slideInterval = setInterval(nextSlide, 3000);
+    }
+
+    function stopAutoSlide() {
+        clearInterval(slideInterval);
+    }
+
+    if (heroSlider) {
+        // Navigation button events
+        if (heroPrev) {
+            heroPrev.addEventListener('click', function() {
+                prevSlide();
+                startAutoSlide();
+            });
+        }
+
+        if (heroNext) {
+            heroNext.addEventListener('click', function() {
+                nextSlide();
+                startAutoSlide();
+            });
+        }
+
+        // Dot navigation
+        heroDots.forEach((dot, index) => {
+            dot.addEventListener('click', function() {
+                showSlide(index);
+                startAutoSlide();
+            });
+        });
+
+        // Pause on hover
+        heroSlider.addEventListener('mouseenter', stopAutoSlide);
+        heroSlider.addEventListener('mouseleave', startAutoSlide);
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stopAutoSlide();
+            } else {
+                startAutoSlide();
+            }
+        });
+
+        // Start auto sliding
+        startAutoSlide();
+    }
+
     // ---- Password visibility toggle ----
     document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {

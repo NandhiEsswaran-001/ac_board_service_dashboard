@@ -15,26 +15,35 @@ $remark_checks = [];
 $payment_status = 'Pending';
 $payment_amount = 0;
 
-$remark_items = [
-    'Compressor Jack',
-    'OLP',
-    'EEV',
-    'Remote',
+$remark_items_left = [
     'Indoor PCB',
-    'Outdoor PCB',
     'Display PCB',
-    'Dis Sensor-OD',
     'Room Sensor-ID',
-    'Coil Sensor-OD',
-    'Back Cover-OD',
-    'Swing MTR',
     'Coil Sensor-ID',
-    'AMB Sensor-OD',
-    'Transformer',
+    'Remote',
     'Indoor Motor',
-    'Outdoor Motor',
-    'Reactor'
+    'Transformer',
+    'Swing MTR'
 ];
+
+$remark_items_right = [
+    'Outdoor PCB',
+    'Dis Sensor-OD',
+    'Coil Sensor-OD',
+    'AMB Sensor-OD',
+    'OLP',
+    'Outdoor Motor',
+    'Reactor',
+    'Stabilizer',
+    'Washing Machine PCB',
+    'Refrigerator PCB',
+    'Wiring and Kit',
+    'Compressor Jack',
+    'EEV'
+];
+
+$remark_items = array_merge($remark_items_left, $remark_items_right);
+$remark_row_count = max(count($remark_items_left), count($remark_items_right));
 
 if (empty($_SESSION['board_new_token'])) {
     $_SESSION['board_new_token'] = bin2hex(random_bytes(16));
@@ -169,13 +178,33 @@ include '../includes/header.php';
                 <div class="form-group full-width">
                     <label>Checklist (Customer Reported / Observed)</label>
                     <div class="checklist-grid">
-                        <?php foreach ($remark_items as $item): ?>
-                            <label class="check-item">
-                                <input type="checkbox" name="remark_checks[]" value="<?= htmlspecialchars($item) ?>"
-                                    <?= in_array($item, $remark_checks, true) ? 'checked' : '' ?>>
-                                <span><?= htmlspecialchars($item) ?></span>
-                            </label>
-                        <?php endforeach; ?>
+                        <?php for ($row = 0; $row < $remark_row_count; $row++): ?>
+                            <div class="checklist-row">
+                                <?php if (isset($remark_items_left[$row])): ?>
+                                    <?php $item = $remark_items_left[$row]; ?>
+                                    <label class="check-item">
+                                        <span class="check-index"><?= $row + 1 ?></span>
+                                        <input type="checkbox" name="remark_checks[]" value="<?= htmlspecialchars($item) ?>"
+                                            <?= in_array($item, $remark_checks, true) ? 'checked' : '' ?>>
+                                        <span><?= htmlspecialchars($item) ?></span>
+                                    </label>
+                                <?php else: ?>
+                                    <span class="check-item check-item-empty" aria-hidden="true"></span>
+                                <?php endif; ?>
+
+                                <?php if (isset($remark_items_right[$row])): ?>
+                                    <?php $item = $remark_items_right[$row]; ?>
+                                    <label class="check-item">
+                                        <span class="check-index"><?= count($remark_items_left) + $row + 1 ?></span>
+                                        <input type="checkbox" name="remark_checks[]" value="<?= htmlspecialchars($item) ?>"
+                                            <?= in_array($item, $remark_checks, true) ? 'checked' : '' ?>>
+                                        <span><?= htmlspecialchars($item) ?></span>
+                                    </label>
+                                <?php else: ?>
+                                    <span class="check-item check-item-empty" aria-hidden="true"></span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endfor; ?>
                     </div>
                 </div>
                 <div class="form-group full-width">
@@ -185,11 +214,13 @@ include '../includes/header.php';
                 </div>
                 <div class="form-group">
                     <label>Board Image 1</label>
-                    <input type="file" name="board_image_1" accept="image/*">
+                    <input type="file" name="board_image_1" accept="image/*" capture="environment">
+                    <button type="button" class="btn btn-secondary" onclick="takePhoto(1)">📷 Take Photo</button>
                 </div>
                 <div class="form-group">
                     <label>Board Image 2</label>
-                    <input type="file" name="board_image_2" accept="image/*">
+                    <input type="file" name="board_image_2" accept="image/*" capture="environment">
+                    <button type="button" class="btn btn-secondary" onclick="takePhoto(2)">📷 Take Photo</button>
                 </div>
                 <div class="form-group">
                     <label>Approximate Amount (₹)</label>
@@ -220,7 +251,71 @@ include '../includes/header.php';
         </form>
     </div>
 </div>
+
+<!-- Camera Modal -->
+<div id="cameraModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 400px; text-align: center;">
+        <span class="close" onclick="closeModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h3>Take Photo</h3>
+        <video id="cameraVideo" autoplay style="width: 100%; max-width: 300px;"></video>
+        <canvas id="cameraCanvas" style="display: none;"></canvas>
+        <br><br>
+        <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
+        <button type="button" class="btn btn-light" onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+
 <script>
+let currentImageField = null;
+let stream = null;
+
+function takePhoto(fieldNum) {
+    currentImageField = fieldNum;
+    const modal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    modal.style.display = 'block';
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function(mediaStream) {
+            stream = mediaStream;
+            video.srcObject = mediaStream;
+        })
+        .catch(function(err) {
+            alert('Camera access denied or not available: ' + err.message);
+            closeModal();
+        });
+}
+
+function closeModal() {
+    const modal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    modal.style.display = 'none';
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    video.srcObject = null;
+}
+
+document.getElementById('captureBtn').addEventListener('click', function() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], `board_image_${currentImageField}.jpg`, { type: 'image/jpeg' });
+        const input = document.querySelector(`input[name="board_image_${currentImageField}"]`);
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        closeModal();
+    }, 'image/jpeg');
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     var form = document.querySelector('form');
     if (!form) return;
