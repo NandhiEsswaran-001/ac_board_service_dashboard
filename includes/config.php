@@ -425,3 +425,47 @@ function handleBoardImageUpload($fieldName) {
 
     return 'uploads/board_images/' . $fileName;
 }
+
+function renderPagination($currentPage, $totalPages, $baseUrl) {
+    if ($totalPages <= 1) return '';
+
+    $html = '<div class="pagination">';
+
+    if ($currentPage > 1) {
+        $prevPage = $currentPage - 1;
+        $html .= '<a href="' . $baseUrl . 'page=' . $prevPage . '" class="page-btn">&laquo; Prev</a>';
+    }
+
+    $start = max(1, $currentPage - 2);
+    $end = min($totalPages, $currentPage + 2);
+
+    if ($start > 1) {
+        $html .= '<a href="' . $baseUrl . 'page=1" class="page-btn">1</a>';
+        if ($start > 2) {
+            $html .= '<span class="page-ellipsis">...</span>';
+        }
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        if ($i == $currentPage) {
+            $html .= '<span class="page-btn active">' . $i . '</span>';
+        } else {
+            $html .= '<a href="' . $baseUrl . 'page=' . $i . '" class="page-btn">' . $i . '</a>';
+        }
+    }
+
+    if ($end < $totalPages) {
+        if ($end < $totalPages - 1) {
+            $html .= '<span class="page-ellipsis">...</span>';
+        }
+        $html .= '<a href="' . $baseUrl . 'page=' . $totalPages . '" class="page-btn">' . $totalPages . '</a>';
+    }
+
+    if ($currentPage < $totalPages) {
+        $nextPage = $currentPage + 1;
+        $html .= '<a href="' . $baseUrl . 'page=' . $nextPage . '" class="page-btn">Next &raquo;</a>';
+    }
+
+    $html .= '</div>';
+    return $html;
+}

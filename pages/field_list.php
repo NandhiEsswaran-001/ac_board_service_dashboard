@@ -3,7 +3,21 @@ require_once '../includes/config.php';
 $pageTitle = 'All Field Services';
 
 $db = getDB();
-$services = $db->query("SELECT fs.*, u.full_name AS emp_name FROM field_services fs LEFT JOIN users u ON fs.assigned_employee=u.id ORDER BY fs.service_date DESC, fs.created_at DESC")->fetchAll();
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
+
+$totalStmt = $db->query("SELECT COUNT(*) FROM field_services");
+$totalRecords = $totalStmt->fetchColumn();
+$totalPages = ceil($totalRecords / $limit);
+
+$stmt = $db->prepare("SELECT fs.*, u.full_name AS emp_name FROM field_services fs LEFT JOIN users u ON fs.assigned_employee=u.id ORDER BY fs.service_date DESC, fs.created_at DESC LIMIT :limit OFFSET :offset");
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$services = $stmt->fetchAll();
+
+$baseUrl = 'field_list.php?';
 
 include '../includes/header.php';
 ?>
@@ -66,6 +80,7 @@ include '../includes/header.php';
         <?php else: ?>
             <p class="no-data">No field services found. <a href="field_new.php">Create the first entry.</a></p>
         <?php endif; ?>
+        <?= renderPagination($page, $totalPages, $baseUrl) ?>
     </div>
 </div>
 

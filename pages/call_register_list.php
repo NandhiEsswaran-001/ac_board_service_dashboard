@@ -6,12 +6,24 @@ ensureCallRegistersTable();
 $pageTitle = 'Call Register';
 
 $db = getDB();
-$calls = $db->query(
-    "SELECT cr.*, u.full_name AS technician_name
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
+
+$totalStmt = $db->query("SELECT COUNT(*) FROM call_registers");
+$totalRecords = $totalStmt->fetchColumn();
+$totalPages = ceil($totalRecords / $limit);
+
+$stmt = $db->prepare("SELECT cr.*, u.full_name AS technician_name
      FROM call_registers cr
      LEFT JOIN users u ON cr.assigned_technician_id = u.id
-     ORDER BY cr.created_at DESC"
-)->fetchAll();
+     ORDER BY cr.created_at DESC LIMIT :limit OFFSET :offset");
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$calls = $stmt->fetchAll();
+
+$baseUrl = 'call_register_list.php?';
 
 include '../includes/header.php';
 ?>
@@ -54,6 +66,7 @@ include '../includes/header.php';
         <?php else: ?>
         <p class="no-data">No call register entries found. <a href="call_register_new.php">Create the first entry.</a></p>
         <?php endif; ?>
+        <?= renderPagination($page, $totalPages, $baseUrl) ?>
     </div>
 </div>
 
