@@ -198,12 +198,18 @@ include '../includes/header.php';
             <div>
                 <p style="font-weight:700;margin-bottom:8px;font-size:13px;">📅 Service Scheduled Message</p>
                 <div style="background:#f8fafc;border:1px solid #d5dce6;border-radius:4px;padding:10px;font-size:12.5px;white-space:pre-line;color:#2c3e50;min-height:80px;"><?= htmlspecialchars($wa_scheduled) ?></div>
-                <a class="btn btn-whatsapp btn-sm mt-10" href="<?= htmlspecialchars($wa_scheduled_url) ?>">📤 Send WhatsApp</a>
+                <div class="flex-gap mt-10">
+                    <a class="btn btn-whatsapp btn-sm" href="<?= htmlspecialchars($wa_scheduled_url) ?>">📤 Send WhatsApp</a>
+                    <a class="btn btn-primary btn-sm" href="field_pdf.php?id=<?= $s['id'] ?>&type=scheduled" target="_blank">📄 Download PDF</a>
+                </div>
             </div>
             <div>
                 <p style="font-weight:700;margin-bottom:8px;font-size:13px;">✅ Service Completed Message</p>
                 <div style="background:#f8fafc;border:1px solid #d5dce6;border-radius:4px;padding:10px;font-size:12.5px;white-space:pre-line;color:#2c3e50;min-height:80px;"><?= htmlspecialchars($wa_completed) ?></div>
-                <a class="btn btn-whatsapp btn-sm mt-10" href="<?= htmlspecialchars($wa_completed_url) ?>">📤 Send WhatsApp</a>
+                <div class="flex-gap mt-10">
+                    <a class="btn btn-whatsapp btn-sm" href="<?= htmlspecialchars($wa_completed_url) ?>">📤 Send WhatsApp</a>
+                    <a class="btn btn-primary btn-sm" href="field_pdf.php?id=<?= $s['id'] ?>&type=completed" target="_blank">📄 Download PDF</a>
+                </div>
             </div>
         </div>
     </div>
